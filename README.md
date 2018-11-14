@@ -3,6 +3,7 @@ ofxDelaunayVoronoiSim
 ====
 
 ## Description
+Under Construction
 ドロネー三角分割とボロノイ図の描画
 
 ## Environment
