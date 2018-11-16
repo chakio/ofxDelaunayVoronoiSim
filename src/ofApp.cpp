@@ -8,7 +8,7 @@ class point
 void point::setup(double Radius,double Speed, double size)
 {
 	double radius = ofRandom(0, Radius);
-	double theta = ofRandom (0,M_PI);
+	double theta = ofRandom (0,2*M_PI);
 
 	circleRadius = size;
 	globalRadius = Radius, 
@@ -16,7 +16,7 @@ void point::setup(double Radius,double Speed, double size)
 	position.x = ofGetWidth() / 2 + radius*cos(theta);
 	position.y = ofGetHeight() / 2 + radius*sin(theta);
 
-	speed = Speed;
+	speed = ofRandom(Speed/5,Speed);
 	double rad = -theta + M_PI / 2 - ofRandom(-70, 70) / 180 * M_PI;
 	vel.x = speed*sin(rad);
 	vel.y = speed*cos(rad);
@@ -27,7 +27,7 @@ void point::update()
 	ofVec2f pos = position - ofVec2f(ofGetWidth() / 2, ofGetHeight() / 2);
 	if (pos.length() > globalRadius)
 	{
-		vel = speed*pos.getNormalized().rotate(ofRandom(-45,45));
+		vel = speed*pos.getNormalized().rotate(ofRandom(-70,70));
 	}
 }
 void point::draw()
@@ -68,7 +68,7 @@ bool circle::check(vector <point>points)
 	for (int i = 0; i < points.size(); i++)
 	{
 		float length = ofVec2f(center - points[i].position).length();
-		if (length< radius - 0.5)
+		if (length < radius-0.01)
 		{
 			result = false;
 		}
@@ -106,60 +106,60 @@ void circle::drawTriangle()
 /*====================================
 class voronoi
 ======================================*/
+voronoi::voronoi(double GLOBAL_RADIUS, double POINT_RADIUS, ofVec2f start ,ofVec2f end)
+{
+	globalRadius 	= GLOBAL_RADIUS;
+	pointRadius		= POINT_RADIUS;
+	point[0]		= start;
+	point[1]		= end;
+}
 void voronoi::draw()
 {
 	ofSetLineWidth(1);
-	double d = 240;
 	double Ax, Ay, Bx, By;
+	ofPoint center(ofGetWidth() / 2,ofGetHeight() / 2);
 	ofFill();
-	if ((point[0] - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - d<0 && (point[1] - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - d<0)
+	if ((point[0] - center).length() - globalRadius<0 && (point[1] - center).length() - globalRadius<0)
 	{
+		ofSetColor(0, 0, 255);
 		ofDrawLine(point[0], point[1]);
 	}
-	else
+	else //if((point[0] - center).length() - globalRadius<0 || (point[1] - center).length() - globalRadius<0)
 	{
 		Ax = point[1].x - ofGetWidth() / 2;
 		Ay = point[1].y - ofGetHeight() / 2;
 		Bx = point[0].x - point[1].x;
 		By = point[0].y - point[1].y;
+
+		double t = 0;
 		double t1, t2;
-		t1 = (-(Ax*Bx + Ay*By) + sqrt(pow((Ax*Bx + Ay*By), 2) - (Bx*Bx + By*By)*(Ax*Ax + Ay*Ay - d*d))) / (Bx*Bx + By*By);
-		t2 = (-(Ax*Bx + Ay*By) - sqrt(pow((Ax*Bx + Ay*By), 2) - (Bx*Bx + By*By)*(Ax*Ax + Ay*Ay - d*d))) / (Bx*Bx + By*By);
+		t1 = (-(Ax*Bx + Ay*By) + sqrt(pow((Ax*Bx + Ay*By), 2) - (Bx*Bx + By*By)*(Ax*Ax + Ay*Ay - globalRadius*globalRadius))) / (Bx*Bx + By*By);
+		t2 = (-(Ax*Bx + Ay*By) - sqrt(pow((Ax*Bx + Ay*By), 2) - (Bx*Bx + By*By)*(Ax*Ax + Ay*Ay - globalRadius*globalRadius))) / (Bx*Bx + By*By);
 		if (t1 > 0 && t1 < 1)
 		{
-			if(((point[0] - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - d)>((point[1] - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - d))
-			{
-				ofSetColor(0, 0, 255);
-				ofDrawLine(point[1], point[1] + t1*(point[0] - point[1]));
-				ofSetColor(0, 255, 0);
-				ofDrawCircle(point[1] + t1*(point[0] - point[1]), 6);
-			}
-			else
-			{
-				ofSetColor(0, 0, 255);
-				ofDrawLine(point[0], point[1] + t1*(point[0] - point[1]));
-				ofSetColor(0, 255, 0);
-				ofDrawCircle(point[1] + t1*(point[0] - point[1]), 6);
-			}
-			
+			t = t1;
 		}
 		else if (t2 > 0 && t2 < 1)
 		{
-			if (((point[0] - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - d)>((point[1] - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - d))
-			{
-				ofSetColor(0, 0, 255);
-				ofDrawLine(point[1], point[1] + t2*(point[0] - point[1]));
-				ofSetColor(0, 255, 0);
-				ofDrawCircle(point[1] + t2*(point[0] - point[1]), 6);
-			}
-			else
-			{
-				ofSetColor(0, 0, 255);
-				ofDrawLine(point[0], point[1] + t2*(point[0] - point[1]));
-				ofSetColor(0, 255, 0);
-				ofDrawCircle(point[1] + t2*(point[0] - point[1]), 6);
-			}
+			t = t2;
 		}
+		
+		ofPoint start,end;
+		if(((point[0] - center).length() - globalRadius)>0)
+		{
+			start=point[1];
+		}
+		else
+		{
+			start=point[0];
+		}
+		end=point[1] + t*(point[0] - point[1]);
+
+		ofSetColor(0, 0, 255);
+		ofDrawLine(start, end);
+
+		ofSetColor(0, 255, 0);
+		ofDrawCircle(end,pointRadius);
 	}
 }
 
@@ -190,133 +190,41 @@ void ofApp::update()
 	{
 		circles 	= getCircles();
 		voronois 	= getVoronois();
+		vector<voronoi> additionalVoronoi = getOutlierVoronois();
+		voronois.insert(voronois.end(),additionalVoronoi.begin(),additionalVoronoi.end());
 	}
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+
+	//外周円の描画
+	ofSetColor(0);
+	ofNoFill();
+	ofSetLineWidth(1);
+	ofDrawCircle(ofVec2f(ofGetWidth() / 2, ofGetHeight() / 2), GLOBAL_RADIUS);
+
+	//動きまわる赤色の点の描画
 	for (int i = 0; i<points.size(); i++)
 	{
 		points[i].draw();
 	}
+
+	//ボロノイの描画
+	for (int i = 0; i < voronois.size(); i++)
+	{
+		voronois[i].draw();
+	}
+
+	//ドロネーの描画
 	for (int i = 0; i<circles.size(); i++)
 	{
 		circles[i].drawTriangle();
 		circles[i].drawCircle();
 		circles[i].drawCenter();
-
-		for (int j = 0; j < 3; j++)
-		{
-			if (circles[i].shareside[j] == 0)
-			{
-				ofPoint p1, p2;
-				p1 = circles[i].center;
-				double dig1 = (circles[i].center - circles[i].elements[0].position).angleRad(circles[i].elements[1].position - circles[i].elements[0].position);
-				double dig2 = (circles[i].center - circles[i].elements[1].position).angleRad(circles[i].elements[2].position - circles[i].elements[1].position);
-				double dig3 = (circles[i].center - circles[i].elements[2].position).angleRad(circles[i].elements[0].position - circles[i].elements[2].position);
-
-				ofVec2f direct = (circles[i].elements[j].position + circles[i].elements[(j+1)%4].position) / 2 - circles[i].center;
-				direct = direct.getNormalized();
-
-				if(j == 0)
-				{
-					if ((dig1 < 0 && dig2 > 0 && dig3 > 0) || (dig1 > 0 && dig2 < 0 && dig3 < 0))
-					{
-						p2 = circles[i].center - direct * 1000;
-					}
-					else
-					{
-						p2 = circles[i].center + direct * 1000;
-					}
-				}
-				else if (j == 1)
-				{
-					if ((dig1 > 0 && dig2 < 0 && dig3 >0) || (dig1 < 0 && dig2 > 0 && dig3 < 0))
-					{
-						p2 = circles[i].center - direct * 1000;
-					}
-					else
-					{
-						p2 = circles[i].center + direct * 1000;
-					}
-				}
-				else if (j == 2)
-				{
-					if ((dig1 > 0 && dig2 > 0 && dig3 < 0) || (dig1 < 0 && dig2 < 0 && dig3 > 0))
-					{
-						p2 = circles[i].center - direct * 10000;
-					}
-					else
-					{
-						p2 = circles[i].center + direct * 10000;
-					}
-				}
-				
-				ofSetLineWidth(0.5);
-				ofDrawLine(p1, p2);
-				
-				/*if ((p1 - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - GLOBAL_RADIUS < 0 && (p2 - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - GLOBAL_RADIUS < 0)
-				{
-					ofDrawLine(p1, p2);
-				}
-				else
-				{
-					double Ax, Ay, Bx, By;
-					Ax = p2.x - ofGetWidth() / 2;
-					Ay = p2.y - ofGetHeight() / 2;
-					Bx = p1.x - p2.x;
-					By = p1.y - p2.y;
-					double t1, t2;
-					t1 = (-(Ax*Bx + Ay*By) + sqrt(pow((Ax*Bx + Ay*By), 2) - (Bx*Bx + By*By)*(Ax*Ax + Ay*Ay - GLOBAL_RADIUS*GLOBAL_RADIUS))) / (Bx*Bx + By*By);
-					t2 = (-(Ax*Bx + Ay*By) - sqrt(pow((Ax*Bx + Ay*By), 2) - (Bx*Bx + By*By)*(Ax*Ax + Ay*Ay - GLOBAL_RADIUS*GLOBAL_RADIUS))) / (Bx*Bx + By*By);
-					if (t1 > 0 && t1 < 1)
-					{
-						if (((p1 - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - GLOBAL_RADIUS) > ((p2 - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - GLOBAL_RADIUS))
-						{
-							ofSetColor(0, 0, 255);
-							ofDrawLine(p2, p2 + t1*(p1 - p2));
-							ofSetColor(0, 255, 0);
-							ofDrawCircle(p2 + t1*(p1 - p2), 6);
-						}
-						else
-						{
-							ofSetColor(0, 0, 255);
-							ofDrawLine(p1, p2 + t1*(p1 - p2));
-							ofSetColor(0, 255, 0);
-							ofDrawCircle(p2 + t1*(p1 - p2), 6);
-						}
-					}
-					else if (t2 > 0 && t2 < 1)
-					{
-						if (((p1 - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - GLOBAL_RADIUS) > ((p2 - ofPoint(ofGetWidth() / 2, ofGetHeight() / 2)).length() - GLOBAL_RADIUS))
-						{
-							ofSetColor(0, 0, 255);
-							ofDrawLine(p2, p2 + t2*(p1 - p2));
-							ofSetColor(0, 255, 0);
-							ofDrawCircle(p2 + t2*(p1 - p2), 6);
-						}
-						else
-						{
-							ofSetColor(0, 0, 255);
-							ofDrawLine(p1, p2 + t2*(p1 - p2));
-							ofSetColor(0, 255, 0);
-							ofDrawCircle(p2 + t2*(p1 - p2), 6);
-						}
-					}
-				}*/
-			}
-		}
-	}
-	for (int i = 0; i < voronois.size(); i++)
-	{
-		ofSetColor(0, 0, 255);
-		voronois[i].draw();
-	}
-	ofSetColor(0);
-	ofNoFill();
-	ofSetLineWidth(1);
-	ofDrawCircle(ofVec2f(ofGetWidth() / 2, ofGetHeight() / 2), GLOBAL_RADIUS);
+	}	
 }
+
 vector<circle> ofApp::getCircles()
 {
 	//外接円の中に他のpointが存在しないpointの組み合わせを全探索
@@ -344,12 +252,13 @@ vector<circle> ofApp::getCircles()
 	}
 	return Circles;
 }
+
 vector<voronoi> ofApp::getVoronois()
 {
 	vector<voronoi> Voronois;
 	for (int i = 0; i<circles.size()-1; i++)
 	{
-		for (int j = i; j < circles.size(); j++)
+		for (int j = i+1; j < circles.size(); j++)
 		{
 			int sharepoint=0;
 			for (int k = 0; k < 3; k++)
@@ -358,11 +267,12 @@ vector<voronoi> ofApp::getVoronois()
 				circles[j].sharepoint[k] = 0;		
 			}
 
+			//ドロネーで分割した三角形の中で頂点を共有しているものの洗い出し
 			for (int k = 0; k < 3; k++)
 			{
 				for (int l = 0; l < 3; l++)
 				{
-					if (circles[i].elements[k].position == circles[j].elements[l].position)
+					if (circles[i].elements[k].position.match(circles[j].elements[l].position))
 					{
 						circles[i].sharepoint[k]++;
 						circles[j].sharepoint[l]++;
@@ -370,7 +280,9 @@ vector<voronoi> ofApp::getVoronois()
 					}
 				}
 			}
-			
+
+			//頂点を２つ共有している場合ひとつの辺を共有していることになる
+			//辺を共有している場合はボロノイの線で繋がれる
 			if (sharepoint == 2)
 			{
 				if (circles[i].sharepoint[0] > 0)
@@ -409,10 +321,81 @@ vector<voronoi> ofApp::getVoronois()
 						circles[j].shareside[1]++;
 					}
 				}
-				voronoi Voronoi;
-				Voronoi.point[0] = circles[i].center;
-				Voronoi.point[1] = circles[j].center;
+
+				voronoi Voronoi(GLOBAL_RADIUS,POINT_RADIUS, circles[i].center,  circles[j].center);
 				Voronois.push_back(Voronoi);
+			}
+		}
+	}
+	return Voronois;
+}
+
+vector<voronoi> ofApp::getOutlierVoronois()
+{
+	vector<voronoi> Voronois;
+	for (int i = 0; i<circles.size(); i++)
+	{
+		//移動点の外枠の探索
+		int share=0;
+		for (int j = 0; j < 3; j++)
+		{
+			if (circles[i].shareside[j] > 0)
+			{
+				share++;
+			}
+		}
+		if(share<3)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				if (circles[i].shareside[j] == 0)
+				{
+					ofPoint p1, p2;
+					p1 = circles[i].center;
+					double dig1 = (circles[i].center - circles[i].elements[0].position).angleRad(circles[i].elements[1].position - circles[i].elements[0].position);
+					double dig2 = (circles[i].center - circles[i].elements[1].position).angleRad(circles[i].elements[2].position - circles[i].elements[1].position);
+					double dig3 = (circles[i].center - circles[i].elements[2].position).angleRad(circles[i].elements[0].position - circles[i].elements[2].position);
+
+					ofVec2f direct = (circles[i].elements[j].position + circles[i].elements[(j+1)%3].position) / 2 - circles[i].center;
+					direct = direct.getNormalized();
+
+					if(j == 0)
+					{
+						if ((dig1 < 0 && dig2 > 0 && dig3 > 0) || (dig1 > 0 && dig2 < 0 && dig3 < 0))
+						{
+							p2 = circles[i].center - direct * 1000;
+						}
+						else
+						{
+							p2 = circles[i].center + direct * 1000;
+						}
+					}
+					else if (j == 1)
+					{
+						if ((dig1 > 0 && dig2 < 0 && dig3 >0) || (dig1 < 0 && dig2 > 0 && dig3 < 0))
+						{
+							p2 = circles[i].center - direct * 1000;
+						}
+						else
+						{
+							p2 = circles[i].center + direct * 1000;
+						}
+					}
+					else if (j == 2)
+					{
+						if ((dig1 > 0 && dig2 > 0 && dig3 < 0) || (dig1 < 0 && dig2 < 0 && dig3 > 0))
+						{
+							p2 = circles[i].center - direct * 10000;
+						}
+						else
+						{
+							p2 = circles[i].center + direct * 10000;
+						}
+					}
+
+					voronoi Voronoi(GLOBAL_RADIUS,POINT_RADIUS, p1, p2);
+					Voronois.push_back(Voronoi);
+				}
 			}
 		}
 	}
