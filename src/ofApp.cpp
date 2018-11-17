@@ -36,7 +36,14 @@ void point::draw()
 	ofSetColor(255, 0, 0);
 	ofDrawCircle(position, circleRadius);
 }
-
+ofVec2f point::getPosition()
+{
+	return position;
+}
+void point::setRadius(double radius)
+{
+	globalRadius = radius;
+}
 /*====================================
 class circle
 ======================================*/
@@ -44,17 +51,17 @@ void circle::setup(vector <point>Elements)
 {
 	//外接円のパラメータの計算
 	elements = Elements;
-	double c = 2 * ((elements[1].position.x - elements[0].position.x)*(elements[2].position.y - elements[0].position.y) - (elements[1].position.y - elements[0].position.y)*(elements[2].position.x - elements[0].position.x));
+	double c = 2 * ((elements[1].getPosition().x - elements[0].getPosition().x)*(elements[2].getPosition().y - elements[0].getPosition().y) - (elements[1].getPosition().y - elements[0].getPosition().y)*(elements[2].getPosition().x - elements[0].getPosition().x));
 	double x1, x2, y1, y2, xy1, xy2;
-	x1 = (elements[2].position.y - elements[0].position.y);
-	x2 = (elements[0].position.y - elements[1].position.y);
-	y1 = (elements[0].position.x - elements[2].position.x);
-	y2 = (elements[1].position.x - elements[0].position.x);
-	xy1 = (pow(elements[1].position.x, 2) - pow(elements[0].position.x, 2) + pow(elements[1].position.y, 2) - pow(elements[0].position.y, 2));
-	xy2 = (pow(elements[2].position.x, 2) - pow(elements[0].position.x, 2) + pow(elements[2].position.y, 2) - pow(elements[0].position.y, 2));
+	x1 = (elements[2].getPosition().y - elements[0].getPosition().y);
+	x2 = (elements[0].getPosition().y - elements[1].getPosition().y);
+	y1 = (elements[0].getPosition().x - elements[2].getPosition().x);
+	y2 = (elements[1].getPosition().x - elements[0].getPosition().x);
+	xy1 = (pow(elements[1].getPosition().x, 2) - pow(elements[0].getPosition().x, 2) + pow(elements[1].getPosition().y, 2) - pow(elements[0].getPosition().y, 2));
+	xy2 = (pow(elements[2].getPosition().x, 2) - pow(elements[0].getPosition().x, 2) + pow(elements[2].getPosition().y, 2) - pow(elements[0].getPosition().y, 2));
 	center.x = (x1*xy1 + x2*xy2) / c;
 	center.y = (y1*xy1 + y2*xy2) / c;
-	radius = ofVec2f(center - elements[0].position).length();
+	radius = ofVec2f(center - elements[0].getPosition()).length();
 
 	shareside[0] = 0;
 	shareside[1] = 0;
@@ -67,7 +74,7 @@ bool circle::check(vector <point>points)
 	bool result = true;
 	for (int i = 0; i < points.size(); i++)
 	{
-		float length = ofVec2f(center - points[i].position).length();
+		float length = ofVec2f(center - points[i].getPosition()).length();
 		if (length < radius-0.01)
 		{
 			result = false;
@@ -95,10 +102,10 @@ void circle::drawTriangle()
 
 	ofMesh mesh;
 	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
-	mesh.addVertex(ofPoint(elements[0].position));
-	mesh.addVertex(ofPoint(elements[1].position));
-	mesh.addVertex(ofPoint(elements[2].position));
-	mesh.addVertex(ofPoint(elements[0].position));
+	mesh.addVertex(ofPoint(elements[0].getPosition()));
+	mesh.addVertex(ofPoint(elements[1].getPosition()));
+	mesh.addVertex(ofPoint(elements[2].getPosition()));
+	mesh.addVertex(ofPoint(elements[0].getPosition()));
 	mesh.drawWireframe();
 	//mesh.draw();
 }
@@ -182,8 +189,10 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update()
 {
+	dynamic_GLOBAL_RADIUS = GLOBAL_RADIUS+GLOBAL_RADIUS/4*sin(ofGetElapsedTimef()/2);
 	for (int i = 0; i<points.size(); i++)
 	{
+		points[i].setRadius(dynamic_GLOBAL_RADIUS);
 		points[i].update();
 	}
 	if (points.size() > 2)
@@ -193,6 +202,7 @@ void ofApp::update()
 		vector<voronoi> additionalVoronoi = getOutlierVoronois();
 		voronois.insert(voronois.end(),additionalVoronoi.begin(),additionalVoronoi.end());
 	}
+
 }
 
 //--------------------------------------------------------------
@@ -202,7 +212,7 @@ void ofApp::draw(){
 	ofSetColor(0);
 	ofNoFill();
 	ofSetLineWidth(1);
-	ofDrawCircle(ofVec2f(ofGetWidth() / 2, ofGetHeight() / 2), GLOBAL_RADIUS);
+	ofDrawCircle(ofVec2f(ofGetWidth() / 2, ofGetHeight() / 2), dynamic_GLOBAL_RADIUS);
 
 	//動きまわる赤色の点の描画
 	for (int i = 0; i<points.size(); i++)
@@ -272,7 +282,7 @@ vector<voronoi> ofApp::getVoronois()
 			{
 				for (int l = 0; l < 3; l++)
 				{
-					if (circles[i].elements[k].position.match(circles[j].elements[l].position))
+					if (circles[i].elements[k].getPosition().match(circles[j].elements[l].getPosition()))
 					{
 						circles[i].sharepoint[k]++;
 						circles[j].sharepoint[l]++;
@@ -322,7 +332,7 @@ vector<voronoi> ofApp::getVoronois()
 					}
 				}
 
-				voronoi Voronoi(GLOBAL_RADIUS,POINT_RADIUS, circles[i].center,  circles[j].center);
+				voronoi Voronoi(dynamic_GLOBAL_RADIUS,POINT_RADIUS, circles[i].center,  circles[j].center);
 				Voronois.push_back(Voronoi);
 			}
 		}
@@ -352,11 +362,11 @@ vector<voronoi> ofApp::getOutlierVoronois()
 				{
 					ofPoint p1, p2;
 					p1 = circles[i].center;
-					double dig1 = (circles[i].center - circles[i].elements[0].position).angleRad(circles[i].elements[1].position - circles[i].elements[0].position);
-					double dig2 = (circles[i].center - circles[i].elements[1].position).angleRad(circles[i].elements[2].position - circles[i].elements[1].position);
-					double dig3 = (circles[i].center - circles[i].elements[2].position).angleRad(circles[i].elements[0].position - circles[i].elements[2].position);
+					double dig1 = (circles[i].center - circles[i].elements[0].getPosition()).angleRad(circles[i].elements[1].getPosition() - circles[i].elements[0].getPosition());
+					double dig2 = (circles[i].center - circles[i].elements[1].getPosition()).angleRad(circles[i].elements[2].getPosition() - circles[i].elements[1].getPosition());
+					double dig3 = (circles[i].center - circles[i].elements[2].getPosition()).angleRad(circles[i].elements[0].getPosition() - circles[i].elements[2].getPosition());
 
-					ofVec2f direct = (circles[i].elements[j].position + circles[i].elements[(j+1)%3].position) / 2 - circles[i].center;
+					ofVec2f direct = (circles[i].elements[j].getPosition() + circles[i].elements[(j+1)%3].getPosition()) / 2 - circles[i].center;
 					direct = direct.getNormalized();
 
 					if(j == 0)
@@ -393,7 +403,7 @@ vector<voronoi> ofApp::getOutlierVoronois()
 						}
 					}
 
-					voronoi Voronoi(GLOBAL_RADIUS,POINT_RADIUS, p1, p2);
+					voronoi Voronoi(dynamic_GLOBAL_RADIUS,POINT_RADIUS, p1, p2);
 					Voronois.push_back(Voronoi);
 				}
 			}

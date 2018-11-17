@@ -8,16 +8,18 @@ class point
 class point
 {
 private:
+	ofVec2f position;
 	ofVec2f vel;
 	double speed;
 	double circleRadius;
 	double globalRadius;
 
 public:
-	ofVec2f position;
 	void setup(double radius,double Speed, double size);
 	void update();
 	void draw();
+	ofVec2f getPosition();
+	void setRadius(double globalradius);
 };
 
 /*====================================
@@ -75,10 +77,12 @@ class ofApp : public ofBaseApp
 		vector<circle>circles;
 		vector<voronoi>voronois;
 
+		double dynamic_GLOBAL_RADIUS;
+
 		int GenNum;
 
 		int POINT_NUM 			= 10;
-		double GLOBAL_RADIUS 	= 240;
+		double GLOBAL_RADIUS 	= 230;
 		double POINT_RADIUS 	= 5;
-		double POINT_SPEED		= 7;
+		double POINT_SPEED		= 10;
 };
