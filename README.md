@@ -12,7 +12,7 @@ ofxDelaunayVoronoiSim
 ドロネー三角分割とボロノイ図は双対の関係にあり、同時に描画することが可能です  
 ボロノイ図が非常に非線形的な動きをするため、なんとなく生き物を見ているような感覚に陥ります  
 
-## Environment
+## Requirement
 * Ubuntu16.04
 * openFrameworks v0.10.0
 * visualstudio code
